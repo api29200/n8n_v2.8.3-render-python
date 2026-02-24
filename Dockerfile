@@ -14,27 +14,27 @@ RUN /sbin/apk -X http://dl-cdn.alpinelinux.org/alpine/latest-stable/main -U --al
 # Krok 2: Instalujemy Pythona
 RUN apk update && apk add --no-cache python3 py3-pip py3-virtualenv
 
-# Krok 3: Tworzymy venv w STAŁEJ lokalizacji domowej
+# Krok 3: Tworzymy venv w bezpiecznej lokalizacji
 RUN python3 -m venv /home/node/python_venv && \
     /home/node/python_venv/bin/pip install --no-cache-dir requests && \
     chown -R node:node /home/node/python_venv && \
     chmod -R 777 /home/node/python_venv
 
-# Krok 4: Folder tymczasowy w /tmp (omijamy noexec na Render)
+# Krok 4: Folder tymczasowy w /tmp (kluczowe dla Render)
 RUN mkdir -p /tmp/n8n_runner && \
     chown -R node:node /tmp/n8n_runner && \
     chmod -R 777 /tmp/n8n_runner
 
-# Krok 5: ROZWIĄZANIE PROBLEMU "Virtual environment is missing"
-# Wersja 2.8.3 używa pnpm. Znajdujemy WSZYSTKIE foldery o nazwie task-runner-python 
-# (nawet te ukryte w .pnpm) i linkujemy tam nasz venv.
-RUN for dir in $(find /usr/local/lib/node_modules -type d -name "task-runner-python"); do \
-      echo "Naprawiam folder: $dir"; \
-      rm -rf "$dir/.venv" && ln -s /home/node/python_venv "$dir/.venv"; \
-      chown -h node:node "$dir/.venv"; \
+# Krok 5: Agresywne szukanie folderu runnera w CAŁYM systemie
+# find / -type d -name "task-runner-python" znajdzie go nawet w ukrytych folderach .pnpm
+RUN RUNNER_PATHS=$(find / -type d -name "task-runner-python" 2>/dev/null) && \
+    for path in $RUNNER_PATHS; do \
+      echo "Linkowanie venv do znalezionego folderu: $path"; \
+      rm -rf "$path/.venv" && ln -s /home/node/python_venv "$path/.venv" || true; \
+      chown -h node:node "$path/.venv" || true; \
     done
 
-# Krok 6: Zapewnienie uprawnień dla użytkownika node
+# Krok 6: Uprawnienia systemowe
 RUN chown -R node:node /usr/local/lib/node_modules/n8n && \
     mkdir -p /home/node/.n8n && chown -R node:node /home/node/.n8n
 
