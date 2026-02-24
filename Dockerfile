@@ -10,7 +10,7 @@ RUN apk add --no-cache python3 py3-pip py3-virtualenv py3-setuptools \
     && python3 -m ensurepip \
     && pip3 install --upgrade pip
 
-# Wracamy do użytkownika n8n
+# Wracamy do użytkownika n8n (internal runner będzie używał node UID/GID)
 USER node
 WORKDIR /home/node
 
