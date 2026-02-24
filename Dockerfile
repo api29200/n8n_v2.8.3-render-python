@@ -14,24 +14,23 @@ RUN /sbin/apk -X http://dl-cdn.alpinelinux.org/alpine/latest-stable/main -U --al
 # Krok 2: Instalujemy Pythona
 RUN apk update && apk add --no-cache python3 py3-pip py3-virtualenv
 
-# Krok 3: Instalujemy venv bezpośrednio tam, gdzie n8n go oczekuje
-# Używamy ścieżki absolutnej dla n8n 2.x
-RUN export RUNNER_DIR="/usr/local/lib/node_modules/n8n/node_modules/@n8n/task-runner-python" && \
-    mkdir -p "$RUNNER_DIR" && \
+# Krok 3: Agresywne szukanie folderu runnera i tworzenie venv
+# W n8n 2.8.3 folder task-runner-python jest głęboko w strukturze .pnpm
+# find -L pozwoli nam przejść przez symlinki pnpm.
+RUN export RUNNER_DIR=$(find -L /usr/local/lib/node_modules -type d -name "task-runner-python" | head -n 1) && \
+    if [ -z "$RUNNER_DIR" ]; then echo "BŁĄD: Nie znaleziono folderu runnera!"; exit 1; fi && \
+    echo "Znaleziono runnera w: $RUNNER_DIR" && \
     python3 -m venv "$RUNNER_DIR/.venv" && \
     "$RUNNER_DIR/.venv/bin/pip" install --no-cache-dir requests && \
-    # Pełne uprawnienia dla użytkownika node i procesów potomnych
+    # Nadanie uprawnień 777, aby n8n (user node) mógł czytać/pisać wewnątrz sandboxa
     chown -R node:node "$RUNNER_DIR" && \
     chmod -R 777 "$RUNNER_DIR/.venv"
 
-# Krok 4: Rozwiązanie błędu "Insufficient Permissions"
-# Tworzymy folder tymczasowy w systemowym /tmp (pamięć kontenera, nie dysk persistent)
+# Krok 4: Rozwiązanie błędu "insufficient permissions"
+# Render blokuje egzekucję na dysku persistent. Używamy systemowego /tmp
 RUN mkdir -p /tmp/n8n_runner && \
     chown -R node:node /tmp/n8n_runner && \
     chmod -R 777 /tmp/n8n_runner
-
-# Krok 5: Uprawnienia do folderu n8n
-RUN chown -R node:node /usr/local/lib/node_modules/n8n
 
 USER node
 WORKDIR /home/node
