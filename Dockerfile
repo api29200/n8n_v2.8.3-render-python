@@ -1,35 +1,29 @@
-# ETAP 1: Pobieramy czystego Alpine'a (w tej samej wersji co pod spodem ma n8n)
-FROM alpine:3.20 AS apk-source
+# ETAP 1: Pobieramy obraz z narzędziem 'uv'
+FROM ghcr.io/astral-sh/uv:latest AS uv-source
 
 # ETAP 2: Docelowy obraz n8n
 FROM n8nio/n8n:2.8.3
 
 USER root
 
-# Krok 1: Kopiujemy narzędzie "apk" i jego pliki systemowe z czystego Alpine do n8n
-COPY --from=apk-source /sbin/apk /sbin/apk
-COPY --from=apk-source /lib/libapk.so* /lib/
-COPY --from=apk-source /etc/apk /etc/apk
-COPY --from=apk-source /usr/share/apk /usr/share/apk
+# Krok 1: Kopiujemy instalator uv
+COPY --from=uv-source /uv /bin/uv
 
-# Krok 2: Odświeżamy przywrócone "apk" i instalujemy wymagane pakiety do Pythona
-RUN apk update && apk add --no-cache \
-    python3 \
-    py3-pip \
-    py3-virtualenv \
-    python3-dev \
-    build-base
+# Krok 2: Tworzymy środowisko. 
+# Magia uv polega na tym, że jeśli nie znajdzie Pythona w systemie, 
+# to automatycznie pobierze jego samodzielną wersję (standalone) z internetu.
+# Dzięki temu w ogóle nie musimy dotykać zablokowanych pakietów systemowych Alpine.
+RUN uv venv /opt/venv --python 3.11
 
-# Krok 3: Tworzymy własny folder na paczki.
-RUN mkdir -p /home/node/custom-python-packages
+# Krok 3: Sprawdzamy czy Python działa i instalujemy paczkę requests
+RUN /opt/venv/bin/python --version && \
+    uv pip install --python /opt/venv/bin/python requests
 
-# Krok 4: Instalujemy paczki z użyciem flagi zapobiegającej błędom środowisk w nowym Pythonie
-RUN pip3 install requests --break-system-packages -t /home/node/custom-python-packages
+# Krok 4: Dodajemy środowisko do zmiennej PATH. 
+# Dzięki temu Task Runner n8n automatycznie znajdzie komendę 'python3' w tym wyizolowanym folderze.
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Krok 5: Informujemy Node.js i Task Runnera, gdzie znajdują się paczki
-ENV PYTHONPATH=/home/node/custom-python-packages
-
-# Krok 6: Zmiana uprawnień dla użytkownika, na którym działa n8n (kluczowe!)
-RUN chown -R node:node /home/node/custom-python-packages
+# Krok 5: Oddajemy folder prawowitemu użytkownikowi, by uniknąć problemów z uprawnieniami
+RUN chown -R node:node /opt/venv
 
 USER node
