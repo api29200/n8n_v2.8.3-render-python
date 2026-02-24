@@ -1,16 +1,21 @@
-# Używamy oficjalnego obrazu n8n z Node.js >= 22
-FROM n8nio/n8n:2.9.0-node22
+# Startujemy od oficjalnego obrazu n8n
+FROM n8nio/n8n:2.9.0
 
-# Przełączamy na root, aby zainstalować Pythona
+# Przełączamy na root, żeby zainstalować Node.js 22 i Pythona
 USER root
 
-# Instalacja Pythona i pip w Debianie
+# Aktualizacja systemu i zależności
 RUN apt-get update && apt-get install -y \
-    python3 python3-pip python3-venv python3-distutils \
-    && ln -sf python3 /usr/bin/python \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    curl python3 python3-pip python3-venv python3-distutils gnupg lsb-release \
+    && rm -rf /var/lib/apt/lists/*
 
-# Wracamy do użytkownika n8n (wbudowany w obraz n8n)
+# Instalacja Node.js 22.x ręcznie
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && node -v \
+    && npm -v
+
+# Powrót do użytkownika n8n
 USER node
 WORKDIR /home/node
 
