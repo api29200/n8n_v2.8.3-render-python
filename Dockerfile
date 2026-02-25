@@ -20,11 +20,10 @@ RUN mkdir -p /usr/local/lib/node_modules/@n8n && \
     cp -r /tmp/n8n-repo/packages/@n8n/task-runner-python /usr/local/lib/node_modules/@n8n/ && \
     rm -rf /tmp/n8n-repo
 
-# Krok 4: Budowa .venv i instalacja krytycznych bibliotek, które odkryliśmy w debugu
+# Krok 4: Budowa .venv i instalacja zoptymalizowanej paczki ETL (~220MB)
 RUN cd /usr/local/lib/node_modules/@n8n/task-runner-python && \
     python3 -m venv .venv && \
-    # Instalujemy websockets (wymagane przez n8n) i requests (Twoje zapotrzebowanie)
-    .venv/bin/pip install --no-cache-dir requests websockets && \
+    .venv/bin/pip install --no-cache-dir requests websockets pandas numpy openpyxl beautifulsoup4 python-dateutil && \
     chmod -R 777 /usr/local/lib/node_modules/@n8n/task-runner-python && \
     chown -R node:node /usr/local/lib/node_modules/@n8n/task-runner-python
 
