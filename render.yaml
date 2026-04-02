@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: n8n-v2-8-3-python
+    env: docker
+    plan: starter
+    region: frankfurt
+    disk:
+      name: n8n_data
+      mountPath: /home/node/.n8n
+      sizeGB: 1
+    envVars:
+      - key: N8N_PORT
+        value: 5678
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_HOST
+        value: 0.0.0.0
+      - key: N8N_RUNNERS_MODE
+        value: internal
+      - key: N8N_RUNNERS_TEMP_DIRECTORY
+        value: /tmp/n8n_runner
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
+      - key: WEBHOOK_URL
+        sync: false
+        placeholder: "https://your-service-name.onrender.com"
+      - key: N8N_NODES_CODE_CAN_REQUIRE_MODULES_BUILTIN
+        value: fs,path,child_process,os,util
+      - key: N8N_NODES_CODE_CAN_REQUIRE_MODULES_EXTERNAL
+        value: "*"
+      - key: N8N_RUNNERS_EXTERNAL_ALLOW
+        value: "*"
+      - key: N8N_RUNNERS_STDLIB_ALLOW
+        value: "*"
+      - key: EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS
+        value: "false"
+      - key: EXECUTIONS_DATA_SAVE_ON_ERROR
+        value: all
