@@ -13,7 +13,7 @@ The official n8n Docker image for 2.8.3 is missing the Python Task Runner source
 - **Permission Bypass:** Redirecting the runner to `/tmp/n8n_runner` with full ownership for the `node` user.
 
 ## 📸 Proof it Works
-![Python Node Working](https://raw.githubusercontent.com/api29200/n8n_v2.8.3-render-python/main/screenshot.png)
+![Python Node Working](https://raw.githubusercontent.com/api29200/n8n_v2.8.3-render-python/main/screenshot1.png)
 *Success! Python Code Node executing with external libraries on Render.*
 
 ## 🚀 One-Click Installation
