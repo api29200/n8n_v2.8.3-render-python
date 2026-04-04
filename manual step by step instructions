@@ -41,7 +41,7 @@ WEBHOOK_URL=https://n8n-v2-8-3-render-python.onrender.com
 9. Go to Environment
 10. +Add variable / import from .env
 11. Paste variables copied previously
-12. Deploy and wait 3-4mins untill you see in events:
+12. Deploy and wait ca 4-6mins untill you see in events:
 ==> Your service is live 🎉
 ==> 
 ==> ///////////////////////////////////////////////////////////
